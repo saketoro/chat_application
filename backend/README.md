@@ -10,7 +10,7 @@
    ```
 2. 下記コマンドを実行し、UVのプロジェクトを作成する
     ```
-    uv init {任意のプロジェクト名} --no-readme --app
+    uv init project --no-readme --app
     ```
 3. 下記コマンドを実行し、backendディレクトリに移動する
    ```
