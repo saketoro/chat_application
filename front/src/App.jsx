@@ -6,6 +6,8 @@ const url = "http://127.0.0.1:8000";
 export const App = () => {
   const [userMessage, setUserMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
+  const [uploadMessage, setUploadMessage] = useState("");
+  const allowedFileTypes = ["text/plain"];
 
   const sendMessage = async () => {
     if (!userMessage.trim()) return;
@@ -24,6 +26,31 @@ export const App = () => {
     } catch (error) {
       console.error("Error fetching chat response:", error);
       alert("エラーが発生しました。もう一度お試しください。");
+    }
+  };
+
+  const uploadFile = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!allowedFileTypes.includes(file.type)) {
+      setUploadMessage("アップロードできるのは.txt形式のファイルのみです。");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post(`${url}/upload_files`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setUploadMessage("アップロード成功: " + response.data.message + " " + response.data.db_id)
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      setUploadMessage("ファイルのアップロード中にエラーが発生しました。");
     }
   };
 
@@ -46,6 +73,12 @@ export const App = () => {
           style={{ width: "80%", marginRight: "10px" }}
         />
         <button onClick={sendMessage}>送信</button>
+
+        <div style={{ marginTop: "20px" }}>
+          <h2>ファイルアップロード</h2>
+          <input type="file" onChange={uploadFile} />
+          {uploadMessage && <p>{uploadMessage}</p>}
+        </div>
       </div>
     </>
   );

@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -9,6 +9,21 @@ import asyncio
 import uvicorn
 from schemas import ChatRequest, ChatResponse
 from chat_func import chat_with_llama
+import uuid
+import chromadb
+from chromadb import PersistentClient
+from chromadb.config import Settings
+# loggerのインポート
+import logging
+import sys
+from logging import StreamHandler, Formatter
+
+# loggerの設定
+logger = logging.getLogger("uvicorn")
+logger.setLevel(logging.DEBUG)
+handler = StreamHandler(sys.stdout)
+handler.setFormatter(Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
+logger.addHandler(handler)
 
 app = FastAPI(title="チャットAPI")
 
@@ -58,6 +73,32 @@ async def chat(request: ChatRequest):
     history.append({"role": "bot", "content": bot_message})
 
     return ChatResponse(bot_message=bot_message, history=history)
+
+# テキストファイルをアップロードしてChromaDBに格納するエンドポイント
+@app.post("/upload_files")
+async def upload_file(file: UploadFile = File(...)):
+    # ファイルの内容を読み取る
+    if file.content_type != "text/plain":
+        raise HTTPException(status_code=400, detail="Only .txt files are allowed")
+
+    content = await file.read()
+    text_data = content.decode("utf-8")
+
+    # UUIDを生成してDBの格納先を決定
+    db_id = str(uuid.uuid4())
+    # DBの格納先ディレクトリを指定
+    persist_directory = f"./chromadb/{db_id}"
+
+    # デバッグ用ログを追加
+    logger.debug(f"Persist directory: {persist_directory}")
+
+    # ChromaDBクライアントを初期化
+    client = chromadb.PersistentClient(path=persist_directory)
+    # コレクションを作成し、テキストデータを格納
+    collection = client.create_collection(name="text_collection")
+    collection.add(documents=[text_data], metadatas=[{"filename": file.filename}], ids=[db_id])
+    logger.debug(collection.peek())
+    return {"message": "File uploaded and processed successfully", "db_id": db_id}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
