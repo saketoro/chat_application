@@ -29,6 +29,7 @@ api_app = FastAPI(title="チャットAPI")
 
 origins = [
     "http://localhost:3000",
+    "http://127.0.0.1:3000"
 ]
 
 api_app.add_middleware(
@@ -38,6 +39,7 @@ api_app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # キャッシュの初期化
 @api_app.on_event("startup")
@@ -106,4 +108,4 @@ async def hello():
     return {"message": "Hello World"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("api_app:api_app", host="0.0.0.0", port=8000, reload=True)
