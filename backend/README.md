@@ -37,9 +37,15 @@
 - 下記コマンドを実行し、APIを起動する
       
     ```
-    uvicorn main:app --reload
+    python api_app.py
     ```
-
+# MCPサーバーの起動方法
+- 下記コマンドを実行し、APIを起動する
+      
+    ```
+    python mcp_app.py
+    ```
+    
 # 参考リンク
 ## UV
 - [uvを使ってPython実行環境を整理してみた](https://dev.classmethod.jp/articles/i-like-uv/)

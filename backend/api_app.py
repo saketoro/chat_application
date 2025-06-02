@@ -12,7 +12,7 @@ from chat_func import chat_with_llama
 import uuid
 import chromadb
 from chromadb import PersistentClient
-from chromadb.config import Settings
+from fastapi_mcp import FastApiMCP
 # loggerのインポート
 import logging
 import sys
@@ -25,13 +25,13 @@ handler = StreamHandler(sys.stdout)
 handler.setFormatter(Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s"))
 logger.addHandler(handler)
 
-app = FastAPI(title="チャットAPI")
+api_app = FastAPI(title="チャットAPI")
 
 origins = [
     "http://localhost:3000",
 ]
 
-app.add_middleware(
+api_app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
@@ -40,19 +40,19 @@ app.add_middleware(
 )
 
 # キャッシュの初期化
-@app.on_event("startup")
+@api_app.on_event("startup")
 async def startup():
     redis = aioredis.from_url("redis://localhost", encoding="utf8", decode_responses=True)
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 # 基本的なエンドポイント（キャッシュ付き）
-@app.get("/")
+@api_app.get("/")
 @cache(expire=60)
 async def hello():
     return {"message": "Hello World!"}
 
 # チャットエンドポイント
-@app.post("/chat", response_model=ChatResponse)
+@api_app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     # 会話履歴を更新
     history = request.history or []
@@ -75,7 +75,7 @@ async def chat(request: ChatRequest):
     return ChatResponse(bot_message=bot_message, history=history)
 
 # テキストファイルをアップロードしてChromaDBに格納するエンドポイント
-@app.post("/upload_files")
+@api_app.post("/upload_files")
 async def upload_file(file: UploadFile = File(...)):
     # ファイルの内容を読み取る
     if file.content_type != "text/plain":
@@ -99,6 +99,11 @@ async def upload_file(file: UploadFile = File(...)):
     collection.add(documents=[text_data], metadatas=[{"filename": file.filename}], ids=[db_id])
     logger.debug(collection.peek())
     return {"message": "File uploaded and processed successfully", "db_id": db_id}
+
+@api_app.get("/hello", tags=["MCP"], operation_id="say_hello")
+async def hello():
+    """シンプルな挨拶エンドポイント"""
+    return {"message": "Hello World"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
