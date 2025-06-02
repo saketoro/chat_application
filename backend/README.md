@@ -45,7 +45,15 @@
     ```
     python mcp_app.py
     ```
-    
+
+# Dockerの起動方法
+## Dockerイメージの作成
+`docker build -t chat_application .`
+
+## コンテナの起動
+`docker run -p 8000:8000 -p 8001:8001 chat_application`
+
+
 # 参考リンク
 ## UV
 - [uvを使ってPython実行環境を整理してみた](https://dev.classmethod.jp/articles/i-like-uv/)
