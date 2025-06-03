@@ -11,3 +11,9 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     bot_message: str
     history: List[dict]
+
+class JokeResponse(BaseModel):
+    id: int
+    type: str
+    setup: str
+    punchline: str

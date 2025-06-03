@@ -7,8 +7,9 @@ from fastapi_cache.decorator import cache
 from redis import asyncio as aioredis
 import asyncio
 import uvicorn
-from schemas import ChatRequest, ChatResponse
+from schemas import ChatRequest, ChatResponse, JokeResponse
 from chat_func import chat_with_llama
+import httpx
 import uuid
 import chromadb
 from chromadb import PersistentClient
@@ -106,6 +107,20 @@ async def upload_file(file: UploadFile = File(...)):
 async def hello():
     """シンプルな挨拶エンドポイント"""
     return {"message": "Hello World"}
+
+@api_app.get("/joke", tags=["MCP"], operation_id="random_joke", response_model=JokeResponse)
+async def get_random_joke():
+    """ランダムなジョークを1つ取得"""
+    JOKE_BASE_URL = "https://official-joke-api.appspot.com"
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(f"{JOKE_BASE_URL}/random_joke")
+            response.raise_for_status()
+            return JokeResponse(**response.json())
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"API request failed: {str(e)}")
+        except httpx.HTTPStatusError as e:
+            raise HTTPException(status_code=e.response.status_code, detail="External API error")
 
 if __name__ == "__main__":
     uvicorn.run("api_app:api_app", host="0.0.0.0", port=8000, reload=True)
