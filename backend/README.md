@@ -37,8 +37,22 @@
 - 下記コマンドを実行し、APIを起動する
       
     ```
-    uvicorn main:app --reload
+    python api_app.py
     ```
+# MCPサーバーの起動方法
+- 下記コマンドを実行し、APIを起動する
+      
+    ```
+    python mcp_app.py
+    ```
+
+# Dockerの起動方法
+## Dockerイメージの作成
+`docker build -t chat_application .`
+
+## コンテナの起動
+`docker run -p 8000:8000 -p 8001:8001 chat_application`
+
 
 # 参考リンク
 ## UV
